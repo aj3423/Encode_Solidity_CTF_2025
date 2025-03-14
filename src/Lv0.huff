@@ -1,0 +1,59 @@
+// opcode      gas-cost	value
+// coinbase    2           0xC4bFccB1668d6E464F33a76baDD8C8D7D341e04A
+// prevrandao  2           42608531796865961324619227215652864949757090792013557512053593057344074703072
+//  (difficulty)
+// gaslimit    2           35999931
+// chainid     2           11155111
+// basefee     2           669162
+// blobbasefee 2           1
+
+// calldatasize 2
+// calldatacopy 3
+// codesize     2
+// codecopy     3
+// selfbalance  5
+
+#define macro MAIN() = takes(0) returns(0) {
+	codesize 0x0 mstore 
+
+	msize 0x0 return     
+
+	// pad the runtime to 42 bytes
+	stop // stop == 0x0, 4 gas for a zero byte, 68 gas for non-zeros
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+}
+

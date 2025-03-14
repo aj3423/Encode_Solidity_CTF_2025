@@ -1,0 +1,16 @@
+
+#define macro MAIN() = takes(0) returns(0) {
+	// input A[6], B[6], return uint[6]
+
+
+	0x4   calldataload 0xc4  calldataload add msize mstore
+	0x24  calldataload 0xe4  calldataload add msize mstore
+	0x44  calldataload 0x104 calldataload add msize mstore
+	0x64  calldataload 0x124 calldataload add msize mstore
+	0x84  calldataload 0x144 calldataload add msize mstore
+	0xa4  calldataload 0x164 calldataload add msize mstore
+
+
+end:
+	msize 0x0 return
+}

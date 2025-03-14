@@ -1,0 +1,51 @@
+// average = (x/2) + (y/2) + ((x | y) & 1)
+
+#define macro V1() = takes(0) returns(0) {
+	blobbasefee
+}
+
+#define macro MAIN() = takes(0) returns(0) {
+	0x4 calldataload codesize/*0x24*/ calldataload // x, y]
+	dup2 dup2 or V1() and swap2 // x, y, x&y&1] 
+	V1() sar // x/2, y, x&y&1]
+	swap1 V1() sar // y/2, x/2, x&y&1]
+	add add 
+
+	0x0 mstore
+	msize 0x0 return
+
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+	stop
+}
+
+//   ((big – small + 1) / 2) + small
+// 3344 gas
+// #define macro MAIN() = takes(0) returns(0) {
+// 	0x4 calldataload 0x24 calldataload // x, y]
+
+// 	dup2 dup2 sgt NO_SWAP jumpi  // big, small]
+// 	swap1  // big, small]
+// NO_SWAP:
+
+// 	dup2 swap1 sub // big-small, small]
+// 	0x1 add  // big-small+1, small]
+// 	0x1 sar // (big-small+1)/2, small]
+// 	add
+
+// 	0x0 mstore
+
+
+// 	msize 0x0 return
+// }
+

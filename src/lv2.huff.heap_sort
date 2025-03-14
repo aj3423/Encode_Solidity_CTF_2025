@@ -1,0 +1,99 @@
+// stack sort
+
+
+#define macro ARR() = takes(1) returns(1) {
+	0x20 mul mload // arr_i, i, j
+}
+#define macro SWAP() = takes(2) returns(0) {
+	// i, j]
+	dup1 0x20 mul mload // arr_i, i, j
+	swap dup3 0x20 mul mload // arr_j, i, arr_i, j
+	mstore mstore
+}
+
+#define macro RETURN() = takes(0) returns(0) {
+	msize 0x0 return
+}
+#define macro _1() = takes(0) returns(0) {
+	// blobbasefee
+	0x1
+}
+
+
+#define macro heapify() = takes(2) returns(0) {
+	// n, i]
+loop:
+	dup2 // largest, n, i]
+
+L_beg:
+	dup3 _1() shl _1() add // l, largest, n, i]
+	dup3 dup2 lt  // l<n, l, largest, n, i]
+	dup3 ARR() dup3 ARR() gt // arr_l>arr_largest, l<n, l, largest, n, i]
+	and iszero L_end jumpi 
+	// l, largest, n, i]
+	swap1 
+L_end: // largest, n, i] 
+	pop
+
+R_beg:
+	dup3 _1() shl 0x2 add // r, largest, n, i]
+	dup3 dup2 lt  // r<n, r, largest, n, i]
+	dup3 ARR() dup3 ARR() gt // arr_r>arr_largest, r<n, r, largest, n, i]
+	and iszero R_end jumpi 
+	swap1 
+R_end: // largest, n, i]
+	pop
+
+	dup3 dup2 eq end jumpi // jump if largest==i
+
+	// largest n, i]
+	dup1 dup3 // n, largest, largest, n, i] 
+
+
+	loop jump 
+end:
+	// largest, n, i
+	pop pop pop
+}
+
+#define macro MAIN() = takes(0) returns(0) {
+
+	0x140 0x4 0x0 calldatacopy
+
+	0x4 0xa heapify()
+	0x3 0xa heapify()
+	0x2 0xa heapify()
+	0x1 0xa heapify()
+	0x0 0xa heapify()
+
+
+
+	0x0 0x9 swap1
+	0x0 0x9 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x8 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x7 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x6 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x5 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x4 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x3 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x2 heapify()
+
+	0x0 0x9 swap1
+	0x0 0x1 heapify()
+
+	RETURN()
+}

@@ -1,0 +1,107 @@
+// void insertionSort(int arr[], int n)
+// {
+//     for (int i = 1; i < n; ++i) {
+//         int key = arr[i];
+//         int j = i - 1;
+//
+//         while (j >= 0 && arr[j] > key) {
+//             arr[j + 1] = arr[j];
+//             j = j - 1;
+//         }
+//         arr[j + 1] = key;
+//     }
+// }
+#define macro MAIN() = takes(0) returns(0) {
+	INITIALIZE()
+
+	0x1  // i]
+loop_main:
+	dup1 GET_I() // key, i]
+	0x1	// 1, key, i]
+	dup3	// i, 1, key, i]
+	sub	// j, key, i]
+	dup2 swap1 // j, key, key, i]
+	INNER_LOOP() // j, key, i]
+	0x1 add  // j+1, key, i]
+	swap1 SET_I()  // i]
+	
+	0x1 add // i]
+	dup1 0xa eq
+	end_main jumpi
+	loop_main jump
+end_main:
+	0x140 0x0 return
+}
+
+// return j
+#define macro INNER_LOOP() = takes (2) returns (1) {
+	// j, key]
+loop_inner:
+	dup1 IS_NEGATIVE() end2_inner jumpi // j, key]
+	dup1 GET_I() // arr_j, j, key]
+
+	dup1 // arr_j, arr_j, j, key]
+	dup4 // key, arr_j, arr_j, j, key]
+	swap1 gt iszero end1_inner jumpi // arr_j, j, key]
+
+	swap1 // j, arr_j, key]
+	dup1 0x1 add // j+1, j, arr_j, key]
+
+	swap1  // j, j+1, arr_j, key]
+	swap2  // arr_j, j+1, j, key]
+
+	SET_I()  // j, key]
+	0x1 swap1 sub // j-1, key]
+	loop_inner jump 
+end1_inner:
+	pop
+end2_inner:
+	swap1
+	pop
+}
+#define macro IS_NEGATIVE() = takes (1) returns (1) {
+	// value
+	0xa  // 0xa, value]
+	swap1 gt
+}
+
+// copy all to memory 0
+#define macro INITIALIZE() = takes (0) returns (0) {
+    0x0 // i]
+loop_init:
+	dup1  // i, i]
+	dup1 GET_CALLDATA()  	// calldata_i, i, i]
+
+	SET_I()	// i]
+
+	// ++n == 10?
+	0x1 add // i]
+	dup1 0xa eq
+	over_init jumpi
+	loop_init jump
+over_init:
+	pop
+}
+
+// calldataload[4 + 0x20*i]
+#define macro GET_CALLDATA() = takes (1) returns (1) {
+	0x20 mul
+	0x4 add
+ 	calldataload
+}
+// calldataload[4 + 0x20*i]
+#define macro GET_CALLDATA() = takes (1) returns (1) {
+	0x20 mul
+	0x4 add
+ 	calldataload
+}
+#define macro GET_I() = takes (1) returns (1) {
+	0x20 mul
+ 	mload
+}
+#define macro SET_I() = takes (2) returns (0) {
+	// value, n]
+	swap1		// n, value]
+	0x20 mul 	// offset, value]
+	mstore
+}

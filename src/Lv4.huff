@@ -1,0 +1,187 @@
+// log2: https://github.com/Vectorized/solady/blob/2abaa64917ae031c58d3623360f265982483c301/src/utils/FixedPointMathLib.sol#L914
+// clz: https://github.com/Vectorized/solady/blob/24b6272d83fba9a4233bafafbcd7f879e3b0948b/src/utils/LibBit.sol#L33
+// lookup table: https://ethereum-magicians.org/t/create-a-new-opcode-for-counting-leading-zeros-clz/10805/3
+
+#define macro V1() = takes(0) returns(0) {
+	blobbasefee // 0x1
+}
+
+// Lv4 algo: 
+//
+// def unknown97bf4cfb(uint256 _param1) payable:
+//   require calldata.size - 4 >=′ 32
+//   require _param1 == addr(_param1)
+//   idx = 0x8000000000000000000000000000000000000000000000000000000000000000
+//   while idx > sha3(block.timestamp, block.difficulty, caller) % -1:
+//       idx = uint255(idx) * 0.5
+//       continue
+//   static call addr(_param1).0xdb53653e with:
+//           gas gas_remaining wei
+//          args (sha3(block.timestamp, block.difficulty, caller) % -1)
+//   if not ext_call.success:
+//       revert with ext_call.return_data[0 len return_data.size]
+//   require return_data.size >=′ 32
+//   if 0 > gas_remaining:
+//       revert with 'NH{q', 17
+//   if ext_call.return_data[0] - idx:
+//       return 1, 0
+//   return 12, 0
+
+
+// Check each bit from left (highest) to right (lowest)
+//
+// for mask = 2^255 to 0:
+//     
+//    if mask <= n:
+//       return mask
+//
+//    mask >>= 1
+//
+// TODO: hardcode all iterations instead of using loop
+#define macro MAIN() = takes(0) returns(0) {
+	0x4 calldataload // n]
+	0x8000000000000000000000000000000000000000000000000000000000000000 // mask, n]
+loop:
+
+	dup2 dup2 // mask, n, mask, n]
+
+	// if mask <= n
+	gt continue jumpi // mask, n]
+		// return mask
+		0x0 mstore
+		msize 0x0 return
+continue:
+	// mask, n]
+
+	// mask >>= 1
+	V1() shr // mask, n
+	
+	loop jump
+}
+
+/*
+ Soultion 1: (30xx gas)
+   extend 32bit lookup table to 256bit
+ 
+ Pseudo code:
+
+	TABLE = [ 32, 0, 1, 19, 0, 0, 0, 27, 0, 24, 3, 0, 29, 0, 9, 0, 12, 7, 0, 20, 0, 0, 4, 30, 10, 0, 21, 0, 5, 31, 0, 0, 0, 0, 0, 18, 17, 16, 0, 0, 15, 0, 0, 0, 26, 0, 14, 0, 23, 0, 2, 0, 0, 28, 25, 0, 0, 13, 8, 0, 0, 11, 22, 6, ]
+   leading_zeros = 0
+  
+   for i in range(7, -1, -1):
+       chunk = (x >> (i * 32)) & 0xFFFFFFFF
+       if chunk != 0:
+           chunk |= chunk >> 1
+           chunk |= chunk >> 2
+           chunk |= chunk >> 4
+           chunk |= chunk >> 8
+           chunk |= chunk >> 16
+           chunk = (chunk * 0x749C0B5D) & 0xFFFFFFFF
+           index = chunk >> 26
+           return leading_zeros + TABLE[index]
+       else:
+           leading_zeros += 32
+  
+   return leading_zeros
+*/
+
+/*
+#define macro MAIN() = takes(0) returns(0) {
+	0x0 
+	0x7 
+	0x4 calldataload // x, i, zeroes]
+
+loop:
+	dup2 0x20 mul // i*32, x, i , zeroes]
+	dup2 swap1 shr 0xffffffff and // chunk, x, i, zeroes]
+	dup1 iszero CHUNK_IS_ZERO jumpi
+	
+	dup1 0x1 shr or // chunk, x, i, zeroes]
+	dup1 0x2 shr or // chunk, x, i, zeroes]
+	dup1 0x4 shr or // chunk, x, i, zeroes]
+	dup1 0x8 shr or // chunk, x, i, zeroes]
+	dup1 0x10 shr or // chunk, x, i, zeroes]
+	0x749C0B5D mul 0xffffffff and // chunk, x, i, zeroes]
+	0x1a shr // chunk>>26, x, i, zeroes]
+
+	0x0 mstore
+	msize 0x0 return
+
+CHUNK_IS_ZERO:
+	pop swap1 // i, x, zeroes]
+	0x1 swap1 sub swap1 // x, i, zeroes]
+	swap2 0x20 add swap2
+
+	loop jump
+end:
+}
+*/
+
+
+
+
+/*
+ soultion 2:  (~3100 gas)
+   return pow(2, log2(n)); 
+
+ function log2(uint256 x) internal pure returns (uint256 r) {
+ 	/// @solidity memory-safe-assembly
+ 	assembly {
+ 		r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+ 		r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+ 		r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+ 		r := or(r, shl(4, lt(0xffff, shr(r, x))))
+ 		r := or(r, shl(3, lt(0xff, shr(r, x))))
+ 		// forgefmt: disable-next-item
+		r := or(
+			r,
+			byte(
+				and(
+					0x1f,
+					shr(shr(r, x), 0x8421084210842108cc6318c6db6d54be)
+				),
+				0x0706060506020504060203020504030106050205030304010505030400000000
+			)
+		)
+ 	}
+ }
+*/
+
+/*
+#define macro MAIN() = takes(0) returns(0) {
+	0x4 calldataload // x]
+
+	// r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
+	dup1 0xffffffffffffffffffffffffffffffff lt 0x7 shl // r, x]
+
+	// r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
+	dup2 dup2 shr 0xffffffffffffffff lt 0x6 shl or // r, x]
+
+	// r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
+	dup2 dup2 shr 0xffffffff lt 0x5 shl or // r, x]
+
+	// r := or(r, shl(4, lt(0xffff, shr(r, x))))
+	dup2 dup2 shr 0xffff lt 0x4 shl or // r, x]
+
+	// r := or(r, shl(3, lt(0xff, shr(r, x))))
+	dup2 dup2 shr 0xff lt 0x3 shl or // r, x]
+
+	swap1  // x, r]
+	dup2  // r, x, r]
+	shr 0x8421084210842108cc6318c6db6d54be swap1 shr 0x1f and 
+
+	0x0706060506020504060203020504030106050205030304010505030400000000
+	swap1 byte or
+
+	// 0x2 exp
+	0x1 swap1 sub 0x2 swap1 shl
+
+	0x0 mstore
+
+	msize 0x0 return
+}
+*/
+
+
+// Solution 3: (~3200 gas)
+//   divide by half, 8 rounds
